@@ -1,5 +1,7 @@
+// FILE: ServiceRegistrator.cs
 using Jellyfin.Plugin.OnePaceDetector.Providers;
 using Jellyfin.Plugin.OnePaceDetector.Resolvers;
+using Jellyfin.Plugin.OnePaceDetector.Services;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Plugins;
@@ -15,6 +17,8 @@ public sealed class ServiceRegistrator : IPluginServiceRegistrator
         IServiceCollection services,
         IServerApplicationHost applicationHost)
     {
+        services.AddSingleton<OnePaceGoogleSheetService>();
+
         services.AddSingleton<IItemResolver, OnePaceEpisodeResolver>();
         services.AddSingleton<ILocalMetadataProvider<Episode>, OnePaceEpisodeLocalProvider>();
         services.AddSingleton<ILocalMetadataProvider<Season>, OnePaceSeasonLocalProvider>();
