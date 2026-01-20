@@ -4,7 +4,7 @@
     {
       "Name": "One Pace Detector Repository",
       "Id": "onepace-detector-repo",
-      "Url": "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/jellyfin-plugin-onepace-detector/main/manifest.json"
+      "Url": "https://raw.githubusercontent.com/Dz7612/jellyfin-plugin-onepace-detector/refs/heads/main/manifest.json"
     }
   ],
   "Plugins": [
@@ -19,7 +19,7 @@
         {
           "Version": "0.1.0",
           "TargetAbi": "10.11.0",
-          "SourceUrl": "https://github.com/Dz7612/jellyfin-plugin-onepace-detector/raw/refs/heads/main/OnePaceDetector.zip",
+          "SourceUrl": "https://github.com/Dz7612/jellyfin-plugin-onepace-detector/archive/refs/tags/beta.zip",
           "Checksum": ""
         }
       ]
