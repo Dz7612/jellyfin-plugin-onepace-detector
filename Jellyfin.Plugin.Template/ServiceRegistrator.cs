@@ -15,10 +15,8 @@ public sealed class ServiceRegistrator : IPluginServiceRegistrator
         IServiceCollection services,
         IServerApplicationHost applicationHost)
     {
-        // Our resolver runs BEFORE Jellyfin's built-in TV resolver
         services.AddSingleton<IItemResolver, OnePaceEpisodeResolver>();
-
-        // Our metadata provider (still useful for metadata refresh flows)
         services.AddSingleton<ILocalMetadataProvider<Episode>, OnePaceEpisodeLocalProvider>();
+        services.AddSingleton<ILocalMetadataProvider<Season>, OnePaceSeasonLocalProvider>();
     }
 }
