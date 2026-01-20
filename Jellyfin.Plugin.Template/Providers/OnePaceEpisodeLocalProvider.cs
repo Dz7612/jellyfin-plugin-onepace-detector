@@ -1,10 +1,9 @@
-// FILE: Providers/OnePaceEpisodeLocalProvider.cs
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.OnePaceDetector.Services;
+using Jellyfin.Plugin.OnePaceDetector.Metadata;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -15,70 +14,61 @@ namespace Jellyfin.Plugin.OnePaceDetector.Providers;
 public sealed class OnePaceEpisodeLocalProvider : ILocalMetadataProvider<Episode>
 {
     private readonly ILogger<OnePaceEpisodeLocalProvider> _logger;
-    private readonly OnePaceGoogleSheetService _sheet;
 
     public OnePaceEpisodeLocalProvider(
-        ILogger<OnePaceEpisodeLocalProvider> logger,
-        OnePaceGoogleSheetService sheet)
+        ILogger<OnePaceEpisodeLocalProvider> logger)
     {
         _logger = logger;
-        _sheet = sheet;
     }
 
-    public string Name => "One Pace Episode (Sheet)";
+    public string Name => "One Pace Episode Metadata";
 
-    // Matches: [One Pace][40-41] Syrup Village 07 ...
     private static readonly Regex FileRegex = new(
         @"^\[One Pace\]\[[^\]]+\]\s*(?<arc>.+?)\s+(?<cut>\d{2})\b",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public async Task<MetadataResult<Episode>> GetMetadata(
+    public Task<MetadataResult<Episode>> GetMetadata(
         ItemInfo info,
         IDirectoryService directoryService,
         CancellationToken cancellationToken)
     {
         var result = new MetadataResult<Episode>();
 
-        if (info.Path is null ||
-            info.Path.IndexOf("One Pace", StringComparison.OrdinalIgnoreCase) < 0)
-            return result;
+        if (info.Path is null)
+            return Task.FromResult(result);
 
-        var fileNameNoExt = Path.GetFileNameWithoutExtension(info.Path);
-        if (string.IsNullOrWhiteSpace(fileNameNoExt))
-            return result;
+        var fileName = Path.GetFileNameWithoutExtension(info.Path);
+        if (string.IsNullOrWhiteSpace(fileName))
+            return Task.FromResult(result);
 
-        if (fileNameNoExt.IndexOf("[One Pace]", StringComparison.OrdinalIgnoreCase) < 0)
-            return result;
+        var match = FileRegex.Match(fileName);
+        if (!match.Success)
+            return Task.FromResult(result);
 
-        var m = FileRegex.Match(fileNameNoExt);
-        if (!m.Success)
-            return result;
+        var arc = OnePaceHardcodedData.NormalizeArc(match.Groups["arc"].Value);
+        if (!int.TryParse(match.Groups["cut"].Value, out var part))
+            return Task.FromResult(result);
 
-        var arc = OnePaceGoogleSheetService.NormalizeArc(m.Groups["arc"].Value.Trim());
-        if (!int.TryParse(m.Groups["cut"].Value, out var cut))
-            return result;
-
-        var row = await _sheet.GetEpisodeAsync(arc, cut, cancellationToken).ConfigureAwait(false);
-        if (row is null)
-            return result;
+        var key = OnePaceHardcodedData.Key(arc, part);
+        if (!OnePaceHardcodedData.Episodes.TryGetValue(key, out var meta))
+            return Task.FromResult(result);
 
         var isDub =
             info.Path.IndexOf("En Dub", StringComparison.OrdinalIgnoreCase) >= 0;
 
-        // We set numbers too (helpful), but your resolver is the real source of truth for grouping
-        // If you want, you can also map arc -> season in your resolver and keep titles from the sheet here.
         result.Item = new Episode
         {
-            Name = string.IsNullOrWhiteSpace(row.Title) ? $"{row.Arc} {row.Part:00}" : row.Title + (isDub ? " (Dub)" : ""),
-            Overview = row.Description,
-            IndexNumber = row.Part
+            Name = meta.Title + (isDub ? " (Dub)" : ""),
+            Overview = meta.Overview,
+            IndexNumber = part
         };
 
         result.HasMetadata = true;
 
-        _logger.LogInformation("OnePaceEpisodeProvider(Sheet): {File} -> {Title}",
-            fileNameNoExt, result.Item.Name);
+        _logger.LogInformation(
+            "OnePaceEpisodeProvider: {File} -> {Title}",
+            fileName, result.Item.Name);
 
-        return result;
+        return Task.FromResult(result);
     }
 }

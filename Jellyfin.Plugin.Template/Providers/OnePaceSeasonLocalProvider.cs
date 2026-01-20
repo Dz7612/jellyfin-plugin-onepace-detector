@@ -1,8 +1,7 @@
-// FILE: Providers/OnePaceSeasonLocalProvider.cs
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.OnePaceDetector.Services;
+using Jellyfin.Plugin.OnePaceDetector.Metadata;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -13,19 +12,16 @@ namespace Jellyfin.Plugin.OnePaceDetector.Providers;
 public sealed class OnePaceSeasonLocalProvider : ILocalMetadataProvider<Season>
 {
     private readonly ILogger<OnePaceSeasonLocalProvider> _logger;
-    private readonly OnePaceGoogleSheetService _sheet;
 
     public OnePaceSeasonLocalProvider(
-        ILogger<OnePaceSeasonLocalProvider> logger,
-        OnePaceGoogleSheetService sheet)
+        ILogger<OnePaceSeasonLocalProvider> logger)
     {
         _logger = logger;
-        _sheet = sheet;
     }
 
-    public string Name => "One Pace Season (Arc Descriptions Sheet)";
+    public string Name => "One Pace Arc Metadata";
 
-    public async Task<MetadataResult<Season>> GetMetadata(
+    public Task<MetadataResult<Season>> GetMetadata(
         ItemInfo info,
         IDirectoryService directoryService,
         CancellationToken cancellationToken)
@@ -33,45 +29,30 @@ public sealed class OnePaceSeasonLocalProvider : ILocalMetadataProvider<Season>
         var result = new MetadataResult<Season>();
 
         if (info.IndexNumber is null)
-            return result;
+            return Task.FromResult(result);
 
-        if (info.Path is null ||
-            info.Path.IndexOf("One Pace", StringComparison.OrdinalIgnoreCase) < 0)
-            return result;
+        if (!OnePaceHardcodedData.SeasonToArc.TryGetValue(
+                info.IndexNumber.Value,
+                out var arc))
+            return Task.FromResult(result);
 
-        var arcGuess = GuessArcFromPath(info.Path);
-        if (string.IsNullOrWhiteSpace(arcGuess))
-            return result;
-
-        arcGuess = OnePaceGoogleSheetService.NormalizeArc(arcGuess);
-
-        var arcRow = await _sheet.GetArcAsync(arcGuess, cancellationToken).ConfigureAwait(false);
+        if (!OnePaceHardcodedData.Arcs.TryGetValue(arc, out var arcMeta))
+            return Task.FromResult(result);
 
         result.Item = new Season
         {
             IndexNumber = info.IndexNumber.Value,
-            Name = arcGuess,
-            Overview = arcRow?.Description
+            Name = arcMeta.Title,
+            Overview = arcMeta.Overview
         };
 
         result.HasMetadata = true;
 
-        _logger.LogInformation("OnePaceSeasonProvider(Sheet): Season {S} -> {Arc}", result.Item.IndexNumber, result.Item.Name);
+        _logger.LogInformation(
+            "OnePaceSeasonProvider: Season {Season} -> {Arc}",
+            result.Item.IndexNumber,
+            result.Item.Name);
 
-        return result;
-    }
-
-    private static string? GuessArcFromPath(string path)
-    {
-        // Example folder: "[23-41] Syrup Village [En Dub][1080p]"
-        var dir = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(path));
-        if (string.IsNullOrWhiteSpace(dir))
-            return null;
-
-        dir = System.Text.RegularExpressions.Regex.Replace(dir, @"^\s*\[[^\]]+\]\s*", "");
-        dir = System.Text.RegularExpressions.Regex.Replace(dir, @"\s*\[[^\]]+\]\s*", " ");
-        dir = System.Text.RegularExpressions.Regex.Replace(dir, @"\s+", " ").Trim();
-
-        return string.IsNullOrWhiteSpace(dir) ? null : dir;
+        return Task.FromResult(result);
     }
 }
