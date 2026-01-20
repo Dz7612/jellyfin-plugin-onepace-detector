@@ -1,0 +1,19 @@
+[
+  {
+    "name": "One Pace Detector",
+    "guid": "9f4c9f26-0d2a-4d1e-9d92-3a7d2b61a001",
+    "description": "Detects One Pace episodes by filename and assigns season/episode metadata.",
+    "overview": "Local metadata provider for One Pace on Jellyfin 10.11+.",
+    "owner": "Dz7612",
+    "category": "Metadata",
+    "versions": [
+      {
+        "version": "0.1.1",
+        "changelog": "Initial release.",
+        "targetAbi": "10.11.0",
+        "sourceUrl": "https://github.com/Dz7612/jellyfin-plugin-onepace-detector/releases/download/V0.1.1/OnePaceDetector.zip",
+        "checksum": "DC764C4F329073DF6FAE84C9159D5364"
+      }
+    ]
+  }
+]
