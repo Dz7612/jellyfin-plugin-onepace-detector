@@ -2,9 +2,7 @@
 
 One Pace Detector is a Jellyfin metadata plugin that detects One Pace episodes by filename and assigns the correct season, episode number, and title.
 
-Designed for Jellyfin 10.11+ and works well on TrueNAS (SCALE / Docker).
-
----
+Designed for Jellyfin 10.11+ 
 
 ## Features
 
@@ -44,7 +42,7 @@ More arcs can be added.
 3. Click Add Repository
 4. Paste the following URL:
 
-https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/jellyfin-plugin-onepace-detector/main/manifest.json
+https://raw.githubusercontent.com/Dz7612/jellyfin-plugin-onepace-detector/refs/heads/main/manifest.json
 
 5. Save and restart Jellyfin
 
