@@ -1667,10 +1667,17 @@ public static class OnePaceHardcodedData
     public static string NormalizeArc(string arc)
     {
         arc ??= string.Empty;
+
         arc = arc.Trim();
+
+        // Remove wrapping quotes if present
+        arc = arc.Trim('"', '\'');
+
         arc = arc.Replace("_", " ").Trim();
+
         if (arc.EndsWith(" Arc", StringComparison.OrdinalIgnoreCase))
             arc = arc[..^4].Trim();
+
         return arc switch
         {
             "Skypeia" => "Skypiea",
@@ -1680,6 +1687,7 @@ public static class OnePaceHardcodedData
             _ => arc
         };
     }
+
 }
 
 public sealed record EpisodeMeta(string Title, string Overview);
