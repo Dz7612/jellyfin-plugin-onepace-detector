@@ -1,0 +1,28 @@
+{
+  "Version": "1.0.0",
+  "Repositories": [
+    {
+      "Name": "One Pace Detector Repository",
+      "Id": "onepace-detector-repo",
+      "Url": "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/jellyfin-plugin-onepace-detector/main/manifest.json"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "One Pace Detector",
+      "Id": "Jellyfin.Plugin.OnePaceDetector",
+      "Description": "Detects One Pace episodes by filename and assigns correct season and episode metadata.",
+      "Overview": "Custom metadata provider for One Pace on Jellyfin 10.11+",
+      "Owner": "Dz7612",
+      "Category": "Metadata",
+      "Versions": [
+        {
+          "Version": "0.1.0",
+          "TargetAbi": "10.11.0",
+          "SourceUrl": "https://github.com/YOUR_GITHUB_USERNAME/jellyfin-plugin-onepace-detector/releases/download/v0.1.0/OnePaceDetector.zip",
+          "Checksum": ""
+        }
+      ]
+    }
+  ]
+}
