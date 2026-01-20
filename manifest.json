@@ -19,7 +19,7 @@
         {
           "Version": "0.1.0",
           "TargetAbi": "10.11.0",
-          "SourceUrl": "https://github.com/YOUR_GITHUB_USERNAME/jellyfin-plugin-onepace-detector/releases/download/v0.1.0/OnePaceDetector.zip",
+          "SourceUrl": "https://github.com/Dz7612/jellyfin-plugin-onepace-detector/raw/refs/heads/main/OnePaceDetector.zip",
           "Checksum": ""
         }
       ]
