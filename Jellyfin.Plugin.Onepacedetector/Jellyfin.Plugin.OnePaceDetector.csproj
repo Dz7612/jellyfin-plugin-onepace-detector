@@ -2,29 +2,27 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <AssemblyName>Jellyfin.Plugin.OnePaceDetector</AssemblyName>
-    <RootNamespace>Jellyfin.Plugin.OnePaceDetector</RootNamespace>
-    <PackageId>Jellyfin.Plugin.OnePaceDetector</PackageId>
-    <Authors>Joshua</Authors>
-    <Description>Detects One Pace episodes by filename and supplies season/episode metadata.</Description>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- IMPORTANT: This is what fixes the "0.0.0.0" version -->
+    <Version>0.2.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+    <InformationalVersion>0.2.0</InformationalVersion>
+
+    <!-- Make sure assembly attributes are generated -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+
+    <!-- Jellyfin plugin builds are usually class library -->
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="33.1.0" />
+    <!-- Jellyfin 10.11.5 packages target net9.0 -->
     <PackageReference Include="Jellyfin.Controller" Version="10.11.5" />
     <PackageReference Include="Jellyfin.Model" Version="10.11.5" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <PackageReference Include="SerilogAnalyzer" Version="0.15.0" PrivateAssets="All" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
-    <PackageReference Include="SmartAnalyzers.MultithreadingAnalyzer" Version="1.1.31" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Configuration\configPage.html" />
-    <EmbeddedResource Include="Configuration\configPage.html" />
   </ItemGroup>
 
 </Project>
