@@ -8,11 +8,11 @@
     "category": "Metadata",
     "versions": [
       {
-        "version": "0.2.0",
+        "version": "0.4.0",
         "changelog": "Initial release.",
         "targetAbi": "10.11.0",
-        "sourceUrl": "https://github.com/Dz7612/jellyfin-plugin-onepace-detector/releases/download/v0.2.0/OnePaceDetector.zip",
-        "checksum": "EB294A99106A523386465A2AFA340AA3"
+        "sourceUrl": "https://github.com/Dz7612/jellyfin-plugin-onepace-detector/releases/download/v0.4.0/OnePaceDetector.zip",
+        "checksum": "D0449506F0F90F982FD0B446509431DB"
       }
     ]
   }
