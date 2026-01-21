@@ -17,9 +17,33 @@ public sealed class OnePaceEpisodeResolver : IItemResolver
     // REQUIRED by IItemResolver
     public ResolverPriority Priority => ResolverPriority.First;
 
-    private static readonly Regex FileRegex = new(
-        @"^\[One\s*Pace\]\[[^\]]+\]\s*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    // Multiple regex patterns to handle different naming conventions
+    private static readonly Regex[] FilePatterns =
+    [
+        // Pattern 1: Original bracket format [One Pace][X] Arc XX
+        new(@"^\[One\s*Pace\]\[[^\]]+\]\s*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 2: [One.Pace] Arc XX
+        new(@"^\[One[._\s]*Pace\]\s*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 3: One Pace - Arc XX
+        new(@"^One[._\s]*Pace[._\s]*(?:-|–)?[._\s]*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 4: Arc XX [One Pace]
+        new(@"(?<arc>.+?)\s+(?<ep>\d{1,3})\s*\[One[._\s]*Pace\]",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 5: OnePace.Arc.XX
+        new(@"One[._\s]*Pace[._\s]*(?<arc>[^.]+?)\.(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 6: Arc XX - One Pace
+        new(@"(?<arc>.+?)\s+(?<ep>\d{1,3})\s*(?:-|–)\s*One[._\s]*Pace",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled)
+    ];
 
     public OnePaceEpisodeResolver(ILogger<OnePaceEpisodeResolver> logger)
     {
@@ -39,24 +63,45 @@ public sealed class OnePaceEpisodeResolver : IItemResolver
         if (string.IsNullOrWhiteSpace(fileName))
             return null;
 
-        var match = FileRegex.Match(fileName);
-        if (!match.Success)
-            return null;
+        _logger.LogDebug("OnePaceResolver: Testing filename: {FileName}", fileName);
 
-        var arcRaw = match.Groups["arc"].Value;
-        var epRaw = match.Groups["ep"].Value;
+        Match? match = null;
+        string arcRaw = "";
+        string epRaw = "";
+
+        // Try each pattern until one matches
+        foreach (var pattern in FilePatterns)
+        {
+            match = pattern.Match(fileName);
+            if (match.Success)
+            {
+                arcRaw = match.Groups["arc"].Value;
+                epRaw = match.Groups["ep"].Value;
+                _logger.LogDebug("OnePaceResolver: Matched pattern: {Pattern}", pattern.ToString());
+                break;
+            }
+        }
+
+        if (match == null || !match.Success)
+        {
+            _logger.LogDebug("OnePaceResolver: No pattern matched for: {Path}", args.Path);
+            return null;
+        }
 
         if (!int.TryParse(epRaw, out var episodeNumber))
+        {
+            _logger.LogWarning("OnePaceResolver: Could not parse episode number '{EpRaw}' from: {Path}",
+                epRaw, args.Path);
             return null;
+        }
 
         var arcKey = OnePaceHardcodedData.NormalizeArcTitle(arcRaw);
 
         if (!OnePaceHardcodedData.ArcsByNormalizedTitle.TryGetValue(arcKey, out var arc))
         {
             _logger.LogInformation(
-                "OnePaceResolver: Unknown arc '{Arc}' for: {Path}",
-                arcRaw,
-                args.Path
+                "OnePaceResolver: Unknown arc '{Arc}' (normalized: '{ArcKey}') for: {Path}",
+                arcRaw, arcKey, args.Path
             );
             return null;
         }

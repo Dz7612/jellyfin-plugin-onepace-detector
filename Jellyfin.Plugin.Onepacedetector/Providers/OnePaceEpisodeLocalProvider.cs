@@ -16,9 +16,33 @@ public sealed class OnePaceEpisodeLocalProvider : ILocalMetadataProvider<Episode
 {
     private readonly ILogger<OnePaceEpisodeLocalProvider> _logger;
 
-    private static readonly Regex FileRegex = new(
-        @"^\[One\s*Pace\]\[[^\]]+\]\s*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    // Multiple regex patterns to handle different naming conventions
+    private static readonly Regex[] FilePatterns =
+    [
+        // Pattern 1: Original bracket format [One Pace][X] Arc XX
+        new(@"^\[One\s*Pace\]\[[^\]]+\]\s*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 2: [One.Pace] Arc XX
+        new(@"^\[One[._\s]*Pace\]\s*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 3: One Pace - Arc XX
+        new(@"^One[._\s]*Pace[._\s]*(?:-|–)?[._\s]*(?<arc>.+?)\s+(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 4: Arc XX [One Pace]
+        new(@"(?<arc>.+?)\s+(?<ep>\d{1,3})\s*\[One[._\s]*Pace\]",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 5: OnePace.Arc.XX
+        new(@"One[._\s]*Pace[._\s]*(?<arc>[^.]+?)\.(?<ep>\d{1,3})\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        
+        // Pattern 6: Arc XX - One Pace
+        new(@"(?<arc>.+?)\s+(?<ep>\d{1,3})\s*(?:-|–)\s*One[._\s]*Pace",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled)
+    ];
 
     public OnePaceEpisodeLocalProvider(ILogger<OnePaceEpisodeLocalProvider> logger)
     {
@@ -41,19 +65,49 @@ public sealed class OnePaceEpisodeLocalProvider : ILocalMetadataProvider<Episode
         if (string.IsNullOrWhiteSpace(fileName))
             return Task.FromResult(result);
 
-        var m = FileRegex.Match(fileName);
-        if (!m.Success)
-            return Task.FromResult(result);
+        _logger.LogDebug("OnePaceDetector: Testing filename: {FileName}", fileName);
 
-        var arcRaw = m.Groups["arc"].Value;
-        var epRaw = m.Groups["ep"].Value;
+        Match? m = null;
+        string arcRaw = "";
+        string epRaw = "";
+
+        // Try each pattern until one matches
+        foreach (var pattern in FilePatterns)
+        {
+            m = pattern.Match(fileName);
+            if (m.Success)
+            {
+                arcRaw = m.Groups["arc"].Value;
+                epRaw = m.Groups["ep"].Value;
+                _logger.LogDebug("OnePaceDetector: Matched pattern: {Pattern}", pattern.ToString());
+                break;
+            }
+        }
+
+        if (m == null || !m.Success)
+        {
+            _logger.LogDebug("OnePaceDetector: No pattern matched for: {Path}", info.Path);
+            return Task.FromResult(result);
+        }
 
         if (!int.TryParse(epRaw, out var episodeNumber))
+        {
+            _logger.LogWarning("OnePaceDetector: Could not parse episode number '{EpRaw}' from: {Path}",
+                epRaw, info.Path);
             return Task.FromResult(result);
+        }
 
         var arcNorm = OnePaceHardcodedData.NormalizeArcTitle(arcRaw);
+        _logger.LogDebug("OnePaceDetector: Raw arc: '{ArcRaw}', Normalized: '{ArcNorm}'", arcRaw, arcNorm);
+
         if (!OnePaceHardcodedData.ArcsByNormalizedTitle.TryGetValue(arcNorm, out var arcInfo))
+        {
+            _logger.LogInformation(
+                "OnePaceDetector: Unknown arc '{Arc}' (normalized: '{ArcNorm}') for: {Path}",
+                arcRaw, arcNorm, info.Path
+            );
             return Task.FromResult(result);
+        }
 
         // Pull hardcoded metadata
         if (!OnePaceHardcodedData.EpisodesBySeasonEpisode.TryGetValue((arcInfo.SeasonNumber, episodeNumber), out var epInfo))
