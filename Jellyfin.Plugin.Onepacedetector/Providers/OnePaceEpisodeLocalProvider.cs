@@ -125,8 +125,8 @@ public sealed class OnePaceEpisodeLocalProvider : ILocalMetadataProvider<Episode
         var item = new Episode
         {
             Name = epInfo.EpisodeTitle,
-            IndexNumber = epInfo.EpisodeNumber,
-            ParentIndexNumber = epInfo.SeasonNumber,
+            IndexNumber = episodeNumber,  // Use the parsed episode number
+            ParentIndexNumber = arcInfo.SeasonNumber,  // Set season from arc mapping
             Overview = string.IsNullOrWhiteSpace(epInfo.Description) ? null : epInfo.Description
         };
 
@@ -136,7 +136,7 @@ public sealed class OnePaceEpisodeLocalProvider : ILocalMetadataProvider<Episode
 
         _logger.LogInformation(
             "OnePaceDetector matched: \"{File}\" -> S{Season:00}E{Episode:00} (\"{Title}\")",
-            fileName, epInfo.SeasonNumber, epInfo.EpisodeNumber, epInfo.EpisodeTitle);
+            fileName, arcInfo.SeasonNumber, episodeNumber, epInfo.EpisodeTitle);
 
         return Task.FromResult(result);
     }

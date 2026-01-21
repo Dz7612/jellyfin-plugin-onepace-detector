@@ -15,8 +15,16 @@ public sealed class OnePaceSeriesLocalProvider : ILocalMetadataProvider<Series>,
     {
         var result = new MetadataResult<Series>();
 
-        // If you want, you can enforce Series name/overview here.
-        // Leaving minimal so we don't override posters/etc.
+        // Set the series name to "One Pace" so it shows correctly in Jellyfin
+        var item = new Series
+        {
+            Name = "One Pace",
+            Overview = "A fan edit of One Piece that removes filler content and pacing issues, creating a more manga-accurate viewing experience."
+        };
+
+        result.Item = item;
+        result.HasMetadata = true;
+
         return Task.FromResult(result);
     }
 }

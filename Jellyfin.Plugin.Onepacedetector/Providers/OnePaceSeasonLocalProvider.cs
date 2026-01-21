@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.OnePaceDetector.Data;
@@ -16,24 +18,37 @@ public sealed class OnePaceSeasonLocalProvider : ILocalMetadataProvider<Season>,
     {
         var result = new MetadataResult<Season>();
 
-        // Season providers are messy: we rely on existing season number already assigned by resolver.
-        // If Jellyfin hasn't assigned it yet, we can't do much here.
-        if (info.IndexNumber is null)
-            return Task.FromResult(result);
+        // Get season number from the parent directory name or info
+        var seasonNumber = info.IndexNumber;
 
-        var seasonNumber = info.IndexNumber.Value;
+        if (seasonNumber is null)
+        {
+            // Try to extract from directory name
+            var parentPath = Path.GetDirectoryName(info.Path);
+            if (parentPath != null)
+            {
+                var dirName = Path.GetFileName(parentPath);
+                if (int.TryParse(dirName, out int parsedSeason))
+                {
+                    seasonNumber = parsedSeason;
+                }
+            }
+        }
+
+        if (seasonNumber is null)
+            return Task.FromResult(result);
 
         // Find arc by season number
         foreach (var kvp in OnePaceHardcodedData.ArcsByNormalizedTitle)
         {
             var arc = kvp.Value;
-            if (arc.SeasonNumber != seasonNumber)
+            if (arc.SeasonNumber != seasonNumber.Value)
                 continue;
 
             var item = new Season
             {
-                IndexNumber = seasonNumber,
-                Name = $"{seasonNumber:00} - {arc.ArcTitle}",
+                IndexNumber = seasonNumber.Value,
+                Name = $"{seasonNumber.Value:00} - {arc.ArcTitle}",
                 Overview = string.IsNullOrWhiteSpace(arc.Description) ? null : arc.Description
             };
 

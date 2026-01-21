@@ -1,5 +1,4 @@
 using Jellyfin.Plugin.OnePaceDetector.Providers;
-using Jellyfin.Plugin.OnePaceDetector.Resolvers;
 using Microsoft.Extensions.DependencyInjection;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
@@ -13,8 +12,6 @@ public sealed class ServiceRegistrator : IPluginServiceRegistrator
 {
     public void RegisterServices(IServiceCollection services, IServerApplicationHost applicationHost)
     {
-        services.AddSingleton<IItemResolver, OnePaceEpisodeResolver>();
-
         services.AddSingleton<ILocalMetadataProvider<Episode>, OnePaceEpisodeLocalProvider>();
         services.AddSingleton<ILocalMetadataProvider<Season>, OnePaceSeasonLocalProvider>();
         services.AddSingleton<ILocalMetadataProvider<Series>, OnePaceSeriesLocalProvider>();
